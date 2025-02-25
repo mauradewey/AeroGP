@@ -129,7 +129,7 @@ def make_model(num_data, train_input_norm):
     #model parameters
     N = num_data # number of training points
     D = num_features = 27 # number of input features
-    M = 60 # number of inducing points
+    M = 100 # number of inducing points
     L = num_latent = 1 # number of latent functions
     P = 13824 # number of pixels/output locations
 
