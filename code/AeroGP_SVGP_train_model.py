@@ -164,7 +164,7 @@ def make_model(num_data, train_input_norm):
     # create SVGP model
     m = gpflow.models.SVGP(
         kernel,
-        gpflow.likelihoods.Gaussian(variance=0.5),
+        gpflow.likelihoods.Gaussian(variance=0.8),
         inducing_variable=iv,
         q_mu=q_mu,
         q_sqrt=q_sqrt,
