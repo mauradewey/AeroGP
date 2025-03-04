@@ -25,13 +25,14 @@ import os
 import time
 
 
-def main(cfg, opt):
+def main(cfg):
 
     #unpack config:
     data_dir = cfg.data_dir #training data (eg. '../../training_data_m')
     test_dir = cfg.test_str #experiment for testing (eg. 'glbOC)
     log_dir = cfg.log_dir  #where to save model checkpoints or load model from (eg. 'logs_glboc')
     external_test = cfg.external_test #if not testing on the held-out experiment, specify the test data directory
+    opt = cfg.opt #train the model (True) or load from checkpoint (False)
 
     #setup train/test data
     train_output_norm, out_mean, out_std, train_input_norm, test_input_norm, out_coords, out_dims, out_shape, test_name = setup_data(test_dir, data_dir, external_test)
@@ -280,14 +281,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("cfg", type=str, help="Config file name")
-    parser.add_argument("--opt", default=False, action='store_true', help="Train the model. Default is load from checkpoint (opt=False)")
+    # moving option to train or test into config file, so things are easier to run automatically:
+    #parser.add_argument("--opt", default=False, action='store_true', help="Train the model. Default is load from checkpoint (opt=False)")
     args = parser.parse_args()
 
     #set required input parameters:
     required = {
-        "data_dir"  : str,
-        "test_str"  : str,
-        "log_dir"   : str
+        "data_dir"  : str,  # training data directory
+        "test_str"  : str,  # experiment to test on/left out from training
+        "log_dir"   : str,  # output directory
+        "opt"       : bool, # False = load model from last checkpoint, True = train new model
     }
     defaults = {
         "external_test" : 'None'
@@ -295,7 +298,7 @@ if __name__ == "__main__":
 
     #parse the config file:
     cfg = get_parameters(args.cfg,required,defaults)
-    opt = args.opt
+    #opt = args.opt
  
     #run main function
-    main(cfg, opt)
+    main(cfg)
