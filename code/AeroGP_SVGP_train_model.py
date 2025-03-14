@@ -23,6 +23,7 @@ import argparse
 from optionsparser import get_parameters
 import os
 import time
+import pprint
 
 
 def main(cfg):
@@ -57,11 +58,13 @@ def main(cfg):
         logf = optimize_with_Adam_NatGrad(model, training_data, num_data, manager, MAXITER, minib=True)
         elbo_df = pd.DataFrame(logf, columns=['elbo'])
         elbo_df.to_csv(log_dir + '/elbo.csv')
-        print(gpflow.utilities.print_summary(model))
+        gpflow.utilities.print_summary(model)
+        #pprint.pprint(gpflow.utilities.parameter_dict(model))
     else: 
         checkpoint.restore(manager.latest_checkpoint)
-        print("Model weights loaded from checkpoint: ", manager.latest_checkpoint)
-        print(gpflow.utilities.print_summary(model))
+        print("Model weights loaded from checkpoint: ", manager.latest_checkpoint, flush=True)
+        pprint.pprint(gpflow.utilities.parameter_dict(model))
+
 
     #test model and save posterior:
     test_model(model, test_input_norm, out_coords, out_dims, out_shape, out_mean, out_std, log_dir, test_name)
@@ -75,16 +78,16 @@ def setup_data(test_str, data_dir, external_test='None'):
 
     #make train/test split
     #if external test data is provided, use that for testing
-    print('Making train/test data split.')
+    print('Making train/test data split.', flush=True)
     if external_test != 'None':
         test_in = [external_test]
-        print('Test experiment: ', external_test)
+        print('Test experiment: ', external_test, flush=True)
     else:
         test_in = [s for s in in_files if test_str in s]
-        print('Test experiment: ', test_str)
+        print('Test experiment: ', test_str, flush=True)
     
     #by default 'test_str' is the held-out experiment (not including in training data, even if external test data is provided)
-    print('Training experiments: ')
+    print('Training experiments: ', flush=True)
     train_in = [s for s in in_files if test_str not in s]
     train_out = [s for s in out_files if test_str not in s]
 
@@ -101,10 +104,10 @@ def setup_data(test_str, data_dir, external_test='None'):
 
     #check array sizes are compatible:
     if (np.shape(in_norm)[0] == np.shape(out_norm)[0]):
-        print ("Training input/output data shapes compatible.")
-        print("Test inputs file: ", test_in)
+        print ("Training input/output data shapes compatible.", flush=True)
+        print("Test inputs file: ", test_in, flush=True)
     else:
-        print("Error! Training data is mis-shapen!")
+        print("Error! Training data is mis-shapen!", flush=True)
         sys.exit()
 
     #normalize test data:
@@ -126,7 +129,7 @@ def make_model(num_data, train_input_norm):
     """
     Create a GPflow SVGP model
     """
-    print("Creating model.")
+    print("Creating model.", flush=True)
     #model parameters
     N = num_data # number of training points
     D = num_features = 27 # number of input features
@@ -152,7 +155,7 @@ def make_model(num_data, train_input_norm):
     Zinit = (train_input_norm.sample(M)).to_numpy()
     Z = Zinit.copy() 
 
-    #inducing points
+    #inducing pointss
     iv = gpflow.inducing_variables.SharedIndependentInducingVariables(
             gpflow.inducing_variables.InducingPoints(Z)
     )
@@ -194,7 +197,7 @@ def optimize_with_Adam_NatGrad(model, data, num_data, manager, MAXITER, minib):
     Optimize the model using Adam and Natural Gradients
     Also optionally uses minibatching
     """
-    print("Optimizing model with Adam and Natural Gradients")
+    print("Optimizing model with Adam and Natural Gradients", flush=True)
 
     if minib:
         N = num_data
@@ -242,7 +245,7 @@ def test_model(model, test_input_norm, out_coords, out_dims, out_shape, out_mean
     Test the model and save the posterior
     """
     # predict on test data:
-    print("Predicting on test data.")
+    print("Predicting on test data.", flush=True)
     post_mean, post_var = model.predict_y(test_input_norm.values)
 
     # un_normalize and reshape outputs:
