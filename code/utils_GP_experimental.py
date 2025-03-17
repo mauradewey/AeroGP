@@ -1,24 +1,23 @@
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xskillscore import crps_gaussian
 
 seconds_in_year = 60 * 60 * 24 * 365.25
 area_of_earth = 5.10072e14 # m^2 
 
 #define perturbation regions as  [lower_left_lon, lower_left_lat, upper_right_lon, upper_right_lat]
+#define perturbation regions as  [lower_left_lon, lower_left_lat, upper_right_lon, upper_right_lat]
 pert_regions = dict([
     ('gb', [0, -90, 360, 90]),
-    ('ru', [55, 45, 180, 80]),
-    ('ea', [95, -10, 150, 45]),
-    ('wa', [60, 0, 95, 45]),
-    ('au', [105, -45, 165, -10]),
-    ('na', [190, 15, 305, 78]),
-    ('sa', [270, -60, 330, 15]),
-    ('af', [-25, -40, 60, 37]),
-    ('eu', [-20, 37, 55, 80]),
+    ('eu', [165, 37, 210, 73]),
+    ('ru', [210, 45, 380, 80]),
+    ('ea', [270, -10, 330, 45]),
+    ('wa', [240, 0, 270, 45]),
+    ('au', [285, -45, 340, -10]),
+    ('na', [10, 15, 125, 75]),
+    ('sa', [95, -60, 150, 15]),
+    ('af', [155, -40, 240, 37])
 ])
-
 
 def create_predictor_regions(pert_regions, data_set):
     #for given input dataset and coordingates of regions, sum emissions in those regions and return as dataframe.
@@ -26,46 +25,85 @@ def create_predictor_regions(pert_regions, data_set):
     inputs = pd.DataFrame()
     X = data_set
 
-    #for EU and AF, which cross the maridian, we need to adjust the longitude range to be between -180 and 180
-    #make a copy of the dataset and adjust the longitude values:
-    X_mod = X.copy()
-    X_mod['lon'] = np.mod(X_mod['lon'] + 180, 360) - 180
-    X_mod = X_mod.sortby(X_mod.lon)
-
     for key_region in pert_regions:
-
+       
         #set up lat/lon slice values:
         lat_slice = slice(pert_regions[key_region][1],pert_regions[key_region][3])
         lon_slice = slice(pert_regions[key_region][0],pert_regions[key_region][2])
 
-        #select from modified dataset if region is 'eu' or 'af':
-        if key_region == 'eu' or key_region == 'af':
-            Y_SO2 = X_mod['SO2'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('SO2')
-            Y_SO2 = Y_SO2.add_suffix(key_region)
-            inputs = pd.concat([inputs, Y_SO2], axis=1)
+        Y_SO2 = X['SO2'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('SO2')
+        Y_SO2 = Y_SO2.add_suffix(key_region)
+        inputs = pd.concat([inputs, Y_SO2], axis=1)
 
-            Y_BC = X_mod['BC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('BC')
-            Y_BC = Y_BC.add_suffix(key_region)
-            inputs = pd.concat([inputs, Y_BC], axis=1)
+        Y_BC = X['BC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('BC')
+        Y_BC = Y_BC.add_suffix(key_region)
+        inputs = pd.concat([inputs, Y_BC], axis=1)
 
-            Y_OC = X_mod['OC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('OC')
-            Y_OC = Y_OC.add_suffix(key_region)
-            inputs = pd.concat([inputs, Y_OC], axis=1)
-        
-        else:       
-            Y_SO2 = X['SO2'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('SO2')
-            Y_SO2 = Y_SO2.add_suffix(key_region)
-            inputs = pd.concat([inputs, Y_SO2], axis=1)
-
-            Y_BC = X['BC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('BC')
-            Y_BC = Y_BC.add_suffix(key_region)
-            inputs = pd.concat([inputs, Y_BC], axis=1)
-
-            Y_OC = X['OC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('OC')
-            Y_OC = Y_OC.add_suffix(key_region)
-            inputs = pd.concat([inputs, Y_OC], axis=1)
+        Y_OC = X['OC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('OC')
+        Y_OC = Y_OC.add_suffix(key_region)
+        inputs = pd.concat([inputs, Y_OC], axis=1)
 
     return inputs
+
+#pert_regions = dict([
+#    ('gb', [0, -90, 360, 90]),
+#    ('ru', [55, 45, 180, 80]),
+#    ('ea', [95, -10, 150, 45]),
+#    ('wa', [60, 0, 95, 45]),
+#    ('au', [105, -45, 165, -10]),
+#    ('na', [190, 15, 305, 78]),
+#    ('sa', [270, -60, 330, 15]),
+#    ('af', [-25, -40, 60, 45]),
+#    ('eu', [-20, 45, 55, 80]),
+#])
+
+
+#def create_predictor_regions(pert_regions, data_set):
+#    #for given input dataset and coordingates of regions, sum emissions in those regions and return as dataframe.
+#    #note: emission units are Tg/yr per gridbox (so summing over lat/lon gives Tg/yr for that region) (not fluxes!)
+#    inputs = pd.DataFrame()
+#    X = data_set#
+
+    #for EU and AF, which cross the maridian, we need to adjust the longitude range to be between -180 and 180
+    #make a copy of the dataset and adjust the longitude values:
+#    X_mod = X.copy()
+#    X_mod['lon'] = np.mod(X_mod['lon'] + 180, 360) - 180
+#    X_mod = X_mod.sortby(X_mod.lon)
+
+#    for key_region in pert_regions:
+
+#        #set up lat/lon slice values:
+#        lat_slice = slice(pert_regions[key_region][1],pert_regions[key_region][3])
+#        lon_slice = slice(pert_regions[key_region][0],pert_regions[key_region][2])
+
+        #select from modified dataset if region is 'eu' or 'af':
+#        if key_region == 'eu' or key_region == 'af':
+#            Y_SO2 = X_mod['SO2'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('SO2')
+#            Y_SO2 = Y_SO2.add_suffix(key_region)
+#            inputs = pd.concat([inputs, Y_SO2], axis=1)
+
+#            Y_BC = X_mod['BC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('BC')
+#            Y_BC = Y_BC.add_suffix(key_region)
+#            inputs = pd.concat([inputs, Y_BC], axis=1)
+
+#            Y_OC = X_mod['OC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('OC')
+#            Y_OC = Y_OC.add_suffix(key_region)
+#            inputs = pd.concat([inputs, Y_OC], axis=1)
+        
+#        else:       
+#            Y_SO2 = X['SO2'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('SO2')
+#            Y_SO2 = Y_SO2.add_suffix(key_region)
+#            inputs = pd.concat([inputs, Y_SO2], axis=1)
+
+#            Y_BC = X['BC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('BC')
+#            Y_BC = Y_BC.add_suffix(key_region)
+#            inputs = pd.concat([inputs, Y_BC], axis=1)
+
+#            Y_OC = X['OC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('OC')
+#            Y_OC = Y_OC.add_suffix(key_region)
+#            inputs = pd.concat([inputs, Y_OC], axis=1)
+
+#    return inputs
 
 #prepare input data:
 # data are annual emissions on 1.9x2.4 degree grid. For training we want a dataframe with total emissions for each region for each year and species, and then concatentate all experiments together.
@@ -122,10 +160,6 @@ def lat_weighted_mean(x):
     weights = np.cos(np.deg2rad(x.lat))
     return x.weighted(weights).mean(['lat', 'lon'])
 
-def lat_weighted_sum(x):
-    weights = np.cos(np.deg2rad(x.lat))
-    return x.weighted(weights).sum(['lat', 'lon'])
-
 def normalize_data(data):
     #normalize data by mean and std
     mean = data.mean()
@@ -133,113 +167,3 @@ def normalize_data(data):
     data = (data - mean) / std
     return data, mean, std
 
-
-#NRMSE:
-def get_nrmse(truth, pred):
-    weights = np.cos(np.deg2rad(truth.lat))
-    return np.sqrt(((truth - pred)**2).weighted(weights).mean(['lat', 'lon'])).data / np.abs(truth.weighted(weights).mean(['lat','lon']).data)
-
-#mean bias:
-def get_bias(truth, pred):
-    weights = np.cos(np.deg2rad(truth.lat))
-    return (pred - truth).weighted(weights).mean(['lat', 'lon']).data
-
-#crps:
-def get_crps(truth, pred, std):
-    weights = np.cos(np.deg2rad(truth.lat))
-    return crps_gaussian(truth, pred, std, weights=weights).data
-
-
-
-def get_bounds(arr):
-    if 'lat_bnds' in arr:
-        bounds = {}
-        bounds["lon"] = arr["lon"].values
-        bounds["lat"] = arr["lat"].values
-        bounds["lon_b"] = np.append(arr['lon_bnds'][:,0].values, arr['lon_bnds'][-1,1].values)
-        bounds["lat_b"] = np.append(arr['lat_bnds'][:,0].values, arr['lat_bnds'][-1,1].values)
-
-    else:    
-        lonMin = np.nanmin(arr["lon"].values)
-        latMin = np.nanmin(arr["lat"].values)
-        lonMax = np.nanmax(arr["lon"].values)
-        latMax = np.nanmax(arr["lat"].values)
-        
-        sizeLon = len(arr["lon"])
-        sizeLat = len(arr["lat"])
-
-        gridSize_lon = (lonMax-lonMin)/sizeLon
-        gridSize_lat = (latMax-latMin)/sizeLat
-        
-        bounds = {}
-        
-        bounds["lon"] = arr["lon"].values
-        bounds["lat"] = arr["lat"].values
-        bounds["lon_b"] = np.linspace(lonMin-(gridSize_lon/2), lonMax+(gridSize_lon/2), sizeLon+1)
-        bounds["lat_b"] = np.linspace(latMin-(gridSize_lat/2), latMax+(gridSize_lat/2), sizeLat+1).clip(-90, 90)
-    
-    return bounds
-
-def area_grid(lat, lon):
-    """
-    Calculate the area of each grid cell
-    Area is in square meters
-    -----------
-    modified from
-    https://towardsdatascience.com/the-correct-way-to-average-the-globe-92ceecd172b7
-    Based on the function in
-    https://github.com/chadagreene/CDT/blob/master/cdt/cdtarea.m
-    """
-    from numpy import meshgrid, deg2rad, gradient, cos
-    from xarray import DataArray
-
-    xlon, ylat = meshgrid(lon, lat)
-    R = earth_radius(ylat)
-
-    dlat = deg2rad(gradient(ylat, axis=0))
-    dlon = deg2rad(gradient(xlon, axis=1))
-
-    dy = dlat * R
-    dx = dlon * R * cos(deg2rad(ylat))
-
-    area = dy * dx
-
-    xda = DataArray(
-        area,
-        dims=["lat", "lon"],
-        coords={"lat": lat, "lon": lon},
-        attrs={
-            "long_name": "area_per_pixel",
-            "description": "area per pixel",
-            "units": "m^2",
-        },
-    )
-    return xda
-
-def earth_radius(lat):
-    '''
-    -----------
-    Copied from
-    https://towardsdatascience.com/the-correct-way-to-average-the-globe-92ceecd172b7
-    WGS84: https://earth-info.nga.mil/GandG/publications/tr8350.2/tr8350.2-a/Chapter%203.pdf
-    '''
-    from numpy import deg2rad, sin, cos
-
-    # define oblate spheroid from WGS84
-    a = 6378137
-    b = 6356752.3142
-    e2 = 1 - (b**2/a**2)
-    
-    # convert from geodecic to geocentric
-    # see equation 3-110 in WGS84
-    lat = deg2rad(lat)
-    lat_gc = np.arctan( (1-e2)*np.tan(lat) )
-
-    # radius equation
-    # see equation 3-107 in WGS84
-    r = (
-        (a * (1 - e2)**0.5) 
-         / (1 - (e2 * np.cos(lat_gc)**2))**0.5 
-        )
-
-    return r

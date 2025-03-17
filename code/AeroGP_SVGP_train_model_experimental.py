@@ -16,7 +16,7 @@ import xarray as xr
 import gpflow
 import tensorflow as tf
 import glob
-from utils_GP_dec import *
+from utils_GP_experimental import *
 from gpflow.ci_utils import reduce_in_tests
 import sys
 import argparse
@@ -52,7 +52,7 @@ def main(cfg, opt):
 
     #train model or load pre-trained from log_dir:
     if opt:
-        MAXITER = reduce_in_tests(4000)
+        MAXITER = reduce_in_tests(6000)
         logf = optimize_with_Adam_NatGrad(model, training_data, num_data, manager, MAXITER, minib=True)
         elbo_df = pd.DataFrame(logf, columns=['elbo'])
         elbo_df.to_csv(log_dir + '/elbo.csv')
