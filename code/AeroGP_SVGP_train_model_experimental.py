@@ -16,7 +16,7 @@ import xarray as xr
 import gpflow
 import tensorflow as tf
 import glob
-from utils_GP_experimental import *
+from utils_GP_dec import *
 from gpflow.ci_utils import reduce_in_tests
 import sys
 import argparse
@@ -52,7 +52,7 @@ def main(cfg, opt):
 
     #train model or load pre-trained from log_dir:
     if opt:
-        MAXITER = reduce_in_tests(2000)
+        MAXITER = reduce_in_tests(4000)
         logf = optimize_with_Adam_NatGrad(model, training_data, num_data, manager, MAXITER, minib=True)
         elbo_df = pd.DataFrame(logf, columns=['elbo'])
         elbo_df.to_csv(log_dir + '/elbo.csv')
@@ -215,7 +215,7 @@ def optimize_with_Adam_NatGrad(model, data, num_data, manager, MAXITER, minib):
     var_params = [(model.q_mu, model.q_sqrt)]
     
     # NatGrad optimization of variational parameters:
-    natgrad_opt = gpflow.optimizers.NaturalGradient(gamma=0.1)
+    natgrad_opt = gpflow.optimizers.NaturalGradient(gamma=0.5)
 
     # Adam optimization of kernel parameters:
     adam_opt = tf.keras.optimizers.Adam(0.01)
@@ -227,8 +227,8 @@ def optimize_with_Adam_NatGrad(model, data, num_data, manager, MAXITER, minib):
     logf = []
 
     for step in range(MAXITER):
-        adam_opt.minimize(training_loss, var_list=model.trainable_variables)
         natgrad_opt.minimize(training_loss, var_list=var_params)
+        adam_opt.minimize(training_loss, var_list=model.trainable_variables)
         if step % 10 == 0:
             elbo = -training_loss().numpy()
             logf.append(elbo)
