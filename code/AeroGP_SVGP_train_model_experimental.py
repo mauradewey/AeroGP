@@ -129,12 +129,14 @@ def make_model(num_data, train_input_norm):
     #model parameters
     N = num_data # number of training points
     D = num_features = 27 # number of input features
-    M = 60 # number of inducing points
+    M = 100 # number of inducing points
     L = num_latent = 1 # number of latent functions
     P = 13824 # number of pixels/output locations
 
     # Make base kernel
-    kernel_list = [gpflow.kernels.Linear(active_dims=[0, 1, 2]) +
+    kernel_list = [gpflow.kernels.Linear(active_dims=[0]) +
+                gpflow.kernels.Linear(active_dims=[1]) +
+                gpflow.kernels.Linear(active_dims=[2]) +
                 gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[3, 6, 9, 12, 15, 18, 21, 24]) +
                 gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[4, 7, 10, 13, 16, 19, 22, 25]) +
                 gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[5, 8, 11, 14, 17, 20, 23, 26]) +
