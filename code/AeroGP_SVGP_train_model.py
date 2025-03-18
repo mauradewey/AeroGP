@@ -54,7 +54,7 @@ def main(cfg):
 
     #train model or load pre-trained from log_dir:
     if opt:
-        MAXITER = reduce_in_tests(3000)
+        MAXITER = reduce_in_tests(4000)
         logf = optimize_with_Adam_NatGrad(model, training_data, num_data, manager, MAXITER, minib=True)
         elbo_df = pd.DataFrame(logf, columns=['elbo'])
         elbo_df.to_csv(log_dir + '/elbo.csv')
@@ -138,13 +138,15 @@ def make_model(num_data, train_input_norm):
     P = 13824 # number of pixels/output locations
 
     # Make base kernel
-    kernel_list = [gpflow.kernels.Linear(active_dims=[0,1,2]) +
-                gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[3, 6, 9, 12, 15, 18, 21, 24]) +
-                gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[4, 7, 10, 13, 16, 19, 22, 25]) +
-                gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[5, 8, 11, 14, 17, 20, 23, 26]) +
+    kernel_list = [gpflow.kernels.Linear(active_dims=[0]) +
+                gpflow.kernels.Linear(active_dims=[1]) +
+                gpflow.kernels.Linear(active_dims=[2]) +
+                gpflow.kernels.Matern32(lengthscales=6 * [1.], active_dims=[3, 6, 9, 12, 15, 18]) +
+                gpflow.kernels.Matern32(lengthscales=6 * [1.], active_dims=[4, 7, 10, 13, 16, 19]) +
+                gpflow.kernels.Matern32(lengthscales=6 * [1.], active_dims=[5, 8, 11, 14, 17, 20]) +
                 gpflow.kernels.White()
-    for i in range(L)
-    ] 
+    #for i in range(L)
+    ]
 
     #LMC kernel
     kernel = gpflow.kernels.LinearCoregionalization(
@@ -171,7 +173,7 @@ def make_model(num_data, train_input_norm):
     # create SVGP model
     m = gpflow.models.SVGP(
         kernel,
-        gpflow.likelihoods.Gaussian(variance=0.8),
+        gpflow.likelihoods.Gaussian(variance=0.5),
         inducing_variable=iv,
         q_mu=q_mu,
         q_sqrt=q_sqrt,
@@ -223,7 +225,7 @@ def optimize_with_Adam_NatGrad(model, data, num_data, manager, MAXITER, minib):
     var_params = [(model.q_mu, model.q_sqrt)]
     
     # NatGrad optimization of variational parameters:
-    natgrad_opt = gpflow.optimizers.NaturalGradient(gamma=0.1)
+    natgrad_opt = gpflow.optimizers.NaturalGradient(gamma=0.5)
 
     # Adam optimization of kernel parameters:
     adam_opt = tf.keras.optimizers.Adam(0.01)
@@ -235,8 +237,8 @@ def optimize_with_Adam_NatGrad(model, data, num_data, manager, MAXITER, minib):
     logf = []
 
     for step in range(MAXITER):
-        adam_opt.minimize(training_loss, var_list=model.trainable_variables)
         natgrad_opt.minimize(training_loss, var_list=var_params)
+        adam_opt.minimize(training_loss, var_list=model.trainable_variables)
         if step % 10 == 0:
             elbo = -training_loss().numpy()
             logf.append(elbo)
