@@ -49,9 +49,9 @@ pert_regions = dict([
     ('ru', [55, 45, 180, 80]),
     ('ea', [95, -10, 150, 45]),
     ('wa', [60, 0, 95, 45]),
-    ('au', [105, -45, 165, -10]),
+    #('au', [105, -45, 165, -10]),
     ('na', [190, 15, 305, 78]),
-    ('sa', [270, -60, 330, 15]),
+    #('sa', [270, -60, 330, 15]),
     ('af', [-25, -40, 60, 45]),
     ('eu', [-20, 45, 55, 80]),
 ])
@@ -61,7 +61,7 @@ def create_predictor_regions(pert_regions, data_set):
 #    #for given input dataset and coordingates of regions, sum emissions in those regions and return as dataframe.
 #    #note: emission units are Tg/yr per gridbox (so summing over lat/lon gives Tg/yr for that region) (not fluxes!)
     inputs = pd.DataFrame()
-    X = data_set#
+    X = data_set
 
     #for EU and AF, which cross the maridian, we need to adjust the longitude range to be between -180 and 180
     #make a copy of the dataset and adjust the longitude values:
@@ -101,6 +101,11 @@ def create_predictor_regions(pert_regions, data_set):
             Y_OC = X['OC'].sel(lat=lat_slice,lon=lon_slice).sum(('lat','lon')).to_dataframe('OC')
             Y_OC = Y_OC.add_suffix(key_region)
             inputs = pd.concat([inputs, Y_OC], axis=1)
+
+        #add three more columns for the rest of the emissions (glb-sum of others)
+    #inputs['SO2rest'] = inputs['SO2gb'] - (inputs.filter(like='SO2').drop(columns='SO2gb').sum(axis=1))
+    #inputs['BCrest'] = inputs['BCgb'] - (inputs.filter(like='BC').drop(columns='BCgb').sum(axis=1))
+    #inputs['OC rest'] = inputs['OCgb'] - (inputs.filter(like='OC').drop(columns='OCgb').sum(axis=1))
 
     return inputs
 

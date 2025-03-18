@@ -16,7 +16,7 @@ import xarray as xr
 import gpflow
 import tensorflow as tf
 import glob
-from utils_GP import *
+from utils_GP_experimental import *
 from gpflow.ci_utils import reduce_in_tests
 import sys
 import argparse
@@ -29,7 +29,7 @@ import pprint
 def main(cfg):
 
     #unpack config:
-    data_dir = cfg.data_dir #training data (eg. '../../training_data_m')
+    data_dir = cfg.data_dir #training data (eg. '../../training_data_v2')
     test_dir = cfg.test_str #experiment for testing (eg. 'glbOC)
     log_dir = cfg.log_dir  #where to save model checkpoints or load model from (eg. 'logs_glboc')
     external_test = cfg.external_test #if not testing on the held-out experiment, specify the test data directory
@@ -54,7 +54,7 @@ def main(cfg):
 
     #train model or load pre-trained from log_dir:
     if opt:
-        MAXITER = reduce_in_tests(6000)
+        MAXITER = reduce_in_tests(3000)
         logf = optimize_with_Adam_NatGrad(model, training_data, num_data, manager, MAXITER, minib=True)
         elbo_df = pd.DataFrame(logf, columns=['elbo'])
         elbo_df.to_csv(log_dir + '/elbo.csv')
@@ -133,18 +133,18 @@ def make_model(num_data, train_input_norm):
     #model parameters
     N = num_data # number of training points
     D = num_features = 27 # number of input features
-    M = 100 # number of inducing points
+    M = 60 # number of inducing points
     L = num_latent = 1 # number of latent functions
     P = 13824 # number of pixels/output locations
 
     # Make base kernel
-    kernel_list = [gpflow.kernels.Linear(active_dims=[0, 1, 2]) +
+    kernel_list = [gpflow.kernels.Linear(active_dims=[0,1,2]) +
                 gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[3, 6, 9, 12, 15, 18, 21, 24]) +
                 gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[4, 7, 10, 13, 16, 19, 22, 25]) +
                 gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[5, 8, 11, 14, 17, 20, 23, 26]) +
                 gpflow.kernels.White()
     for i in range(L)
-    ]
+    ] 
 
     #LMC kernel
     kernel = gpflow.kernels.LinearCoregionalization(
@@ -155,7 +155,7 @@ def make_model(num_data, train_input_norm):
     Zinit = (train_input_norm.sample(M)).to_numpy()
     Z = Zinit.copy() 
 
-    #inducing pointss
+    #inducing points
     iv = gpflow.inducing_variables.SharedIndependentInducingVariables(
             gpflow.inducing_variables.InducingPoints(Z)
     )
@@ -165,6 +165,9 @@ def make_model(num_data, train_input_norm):
     # initialize \sqrt(Σ) of variational posterior to be of shape LxMxM
     q_sqrt = np.repeat(np.eye(M)[None, ...], L, axis=0) * 1.0
 
+    # Define the noise variances as trainable parameters
+    #noise_variances = gpflow.Parameter(np.ones(P) * 0.5, transform=gpflow.utilities.positive(), trainable=True)
+
     # create SVGP model
     m = gpflow.models.SVGP(
         kernel,
@@ -172,6 +175,7 @@ def make_model(num_data, train_input_norm):
         inducing_variable=iv,
         q_mu=q_mu,
         q_sqrt=q_sqrt,
+        whiten=True
     )
 
     return m
@@ -209,7 +213,7 @@ def optimize_with_Adam_NatGrad(model, data, num_data, manager, MAXITER, minib):
             .batch(minibatch_size))
         train_dataset = iter(data_minibatch)
     else:
-        train_dataset = data
+        train_dataset = tf.data.Dataset.from_tensors(data)
 
     # stop Adam from optimizing variational parameters:
     gpflow.set_trainable(model.q_mu, False)
