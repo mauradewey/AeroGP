@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xskillscore import crps_gaussian
 
 seconds_in_year = 60 * 60 * 24 * 365.25
 area_of_earth = 5.10072e14 # m^2 
@@ -9,14 +8,14 @@ area_of_earth = 5.10072e14 # m^2
 #define perturbation regions as  [lower_left_lon, lower_left_lat, upper_right_lon, upper_right_lat]
 pert_regions = dict([
     ('gb', [0, -90, 360, 90]),
-    ('ru', [60, 45, 180, 80]),
+    ('ru', [55, 45, 180, 80]),
     ('ea', [95, -10, 150, 45]),
     ('wa', [60, 0, 95, 45]),
-    ('au', [105, -45, 165, -10]),
+    #('au', [105, -45, 165, -10]),
     ('na', [190, 15, 305, 78]),
-    ('sa', [270, -60, 330, 15]),
-    ('af', [-25, -40, 60, 37]),
-    ('eu', [-20, 37, 50, 75]),
+    #('sa', [270, -60, 330, 15]),
+    ('af', [-25, -40, 60, 45]),
+    ('eu', [-20, 45, 55, 80]),
 ])
 
 
@@ -122,9 +121,7 @@ def lat_weighted_mean(x):
     weights = np.cos(np.deg2rad(x.lat))
     return x.weighted(weights).mean(['lat', 'lon'])
 
-def lat_weighted_sum(x):
-    weights = np.cos(np.deg2rad(x.lat))
-    return x.weighted(weights).sum(['lat', 'lon'])
+
 
 def normalize_data(data):
     #normalize data by mean and std
@@ -133,116 +130,6 @@ def normalize_data(data):
     data = (data - mean) / std
     return data, mean, std
 
-
-#NRMSE:
-def get_nrmse(truth, pred):
-    weights = np.cos(np.deg2rad(truth.lat))
-    return np.sqrt(((truth - pred)**2).weighted(weights).mean(['lat', 'lon'])).data / np.abs(truth.weighted(weights).mean(['lat','lon']).data)
-
-#mean bias:
-def get_bias(truth, pred):
-    weights = np.cos(np.deg2rad(truth.lat))
-    return (pred - truth).weighted(weights).mean(['lat', 'lon']).data
-
-#crps:
-def get_crps(truth, pred, std):
-    weights = np.cos(np.deg2rad(truth.lat))
-    return crps_gaussian(truth, pred, std, weights=weights).data
-
-
-
-def get_bounds(arr):
-    if 'lat_bnds' in arr:
-        bounds = {}
-        bounds["lon"] = arr["lon"].values
-        bounds["lat"] = arr["lat"].values
-        bounds["lon_b"] = np.append(arr['lon_bnds'][:,0].values, arr['lon_bnds'][-1,1].values)
-        bounds["lat_b"] = np.append(arr['lat_bnds'][:,0].values, arr['lat_bnds'][-1,1].values)
-
-    else:    
-        lonMin = np.nanmin(arr["lon"].values)
-        latMin = np.nanmin(arr["lat"].values)
-        lonMax = np.nanmax(arr["lon"].values)
-        latMax = np.nanmax(arr["lat"].values)
-        
-        sizeLon = len(arr["lon"])
-        sizeLat = len(arr["lat"])
-
-        gridSize_lon = (lonMax-lonMin)/sizeLon
-        gridSize_lat = (latMax-latMin)/sizeLat
-        
-        bounds = {}
-        
-        bounds["lon"] = arr["lon"].values
-        bounds["lat"] = arr["lat"].values
-        bounds["lon_b"] = np.linspace(lonMin-(gridSize_lon/2), lonMax+(gridSize_lon/2), sizeLon+1)
-        bounds["lat_b"] = np.linspace(latMin-(gridSize_lat/2), latMax+(gridSize_lat/2), sizeLat+1).clip(-90, 90)
-    
-    return bounds
-
-def area_grid(lat, lon):
-    """
-    Calculate the area of each grid cell
-    Area is in square meters
-    -----------
-    modified from
-    https://towardsdatascience.com/the-correct-way-to-average-the-globe-92ceecd172b7
-    Based on the function in
-    https://github.com/chadagreene/CDT/blob/master/cdt/cdtarea.m
-    """
-    from numpy import meshgrid, deg2rad, gradient, cos
-    from xarray import DataArray
-
-    xlon, ylat = meshgrid(lon, lat)
-    R = earth_radius(ylat)
-
-    dlat = deg2rad(gradient(ylat, axis=0))
-    dlon = deg2rad(gradient(xlon, axis=1))
-
-    dy = dlat * R
-    dx = dlon * R * cos(deg2rad(ylat))
-
-    area = dy * dx
-
-    xda = DataArray(
-        area,
-        dims=["lat", "lon"],
-        coords={"lat": lat, "lon": lon},
-        attrs={
-            "long_name": "area_per_pixel",
-            "description": "area per pixel",
-            "units": "m^2",
-        },
-    )
-    return xda
-
-def earth_radius(lat):
-    '''
-    -----------
-    Copied from
-    https://towardsdatascience.com/the-correct-way-to-average-the-globe-92ceecd172b7
-    WGS84: https://earth-info.nga.mil/GandG/publications/tr8350.2/tr8350.2-a/Chapter%203.pdf
-    '''
-    from numpy import deg2rad, sin, cos
-
-    # define oblate spheroid from WGS84
-    a = 6378137
-    b = 6356752.3142
-    e2 = 1 - (b**2/a**2)
-    
-    # convert from geodecic to geocentric
-    # see equation 3-110 in WGS84
-    lat = deg2rad(lat)
-    lat_gc = np.arctan( (1-e2)*np.tan(lat) )
-
-    # radius equation
-    # see equation 3-107 in WGS84
-    r = (
-        (a * (1 - e2)**0.5) 
-         / (1 - (e2 * np.cos(lat_gc)**2))**0.5 
-        )
-
-    return r
 
 
 

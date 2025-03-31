@@ -16,7 +16,7 @@ import xarray as xr
 import gpflow
 import tensorflow as tf
 import glob
-from utils_GP_experimental import *
+from utils_GP_dec import *
 from gpflow.ci_utils import reduce_in_tests
 import sys
 import argparse
@@ -40,7 +40,6 @@ def main(cfg, opt):
     
     #make model
     model = make_model(num_data, train_input_norm)
-    #model = make_basic_model(train_input_norm, train_output_norm)
 
     #setup checkpointing:
     checkpoint = tf.train.Checkpoint(model=model)
@@ -57,7 +56,6 @@ def main(cfg, opt):
         logf = optimize_with_Adam_NatGrad(model, training_data, num_data, manager, MAXITER, minib=True)
         elbo_df = pd.DataFrame(logf, columns=['elbo'])
         elbo_df.to_csv(log_dir + '/elbo.csv')
-        #optimize_model_with_scipy(model, training_data, monitor, 1000)
         print(gpflow.utilities.print_summary(model))
     else: 
         checkpoint.restore(manager.latest_checkpoint)
@@ -134,28 +132,16 @@ def make_model(num_data, train_input_norm):
     M = 60 # number of inducing points
     L = num_latent = 1 # number of latent functions
     P = 13824 # number of pixels/output locations
-    
+
     # Make base kernel
-
-    '''
-    kernel_list = [gpflow.kernels.Linear(active_dims=[0, 1, 2])+gpflow.kernels.Matern12(lengthscales=3*[1.],active_dims=[0,1,2]),
-     gpflow.kernels.Matern32(lengthscales=3*[1.],active_dims=[3,4,5]),
-     gpflow.kernels.Matern32(lengthscales=3*[1.],active_dims=[6,7,8]),
-     gpflow.kernels.Matern32(lengthscales=3*[1.],active_dims=[9,10,11]),
-     gpflow.kernels.Matern32(lengthscales=3*[1.],active_dims=[12,13,14]),
-     gpflow.kernels.Matern32(lengthscales=3*[1.],active_dims=[15,16,17]),
-     gpflow.kernels.Matern32(lengthscales=3*[1.],active_dims=[18,19,20])
-     #gpflow.kernels.White()
-    ]
-    '''
-    kernel_list = [gpflow.kernels.Linear(active_dims=[0, 1, 2])+
-                   gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[3,6,9,12,15,18,21,24])+
-                   gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[4,7,10,13,16,19,22,25])+
-                   gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[5,8,11,14,17,20,23,26])+
-                     gpflow.kernels.White()
+    kernel_list = [gpflow.kernels.Linear(active_dims=[0, 1, 2]) +
+                gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[3, 6, 9, 12, 15, 18, 21, 24]) +
+                gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[4, 7, 10, 13, 16, 19, 22, 25]) +
+                gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[5, 8, 11, 14, 17, 20, 23, 26]) +
+                gpflow.kernels.White()
+    for i in range(L)
     ]
 
-  
     #LMC kernel
     kernel = gpflow.kernels.LinearCoregionalization(
         kernel_list, W=np.random.randn(P,L)
@@ -175,20 +161,10 @@ def make_model(num_data, train_input_norm):
     # initialize \sqrt(Σ) of variational posterior to be of shape LxMxM
     q_sqrt = np.repeat(np.eye(M)[None, ...], L, axis=0) * 1.0
 
-    # Initialize trainable noise variance for each output
-    initial_noise = np.ones(P) * 0.8  # Initial noise level for each output
-    noise_variance = gpflow.Parameter(
-        initial_noise, 
-        transform=gpflow.utilities.positive()  # Softplus transformation
-    )
-
-    # Define Gaussian likelihood with per-output noise variance
-    likelihood = gpflow.likelihoods.Gaussian(variance=0.5)
-
     # create SVGP model
     m = gpflow.models.SVGP(
         kernel,
-        likelihood,
+        gpflow.likelihoods.Gaussian(variance=0.5),
         inducing_variable=iv,
         q_mu=q_mu,
         q_sqrt=q_sqrt,
@@ -196,23 +172,7 @@ def make_model(num_data, train_input_norm):
 
     return m
 
-def make_basic_model(train_input_norm, train_output_norm):
-    # Make kernel
-    kernel_global = gpflow.kernels.Linear(active_dims=[0, 1, 2])
-    kernel_SO2 = gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[3, 6, 9, 12, 15, 18, 21, 24])
-    kernel_BC = gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[4, 7, 10, 13, 16, 19, 22, 25])
-    kernel_OC = gpflow.kernels.Matern32(lengthscales=8 * [1.], active_dims=[5, 8, 11, 14, 17, 20, 23, 26])
 
-    kernel = kernel_global + kernel_BC + kernel_SO2 + kernel_OC + gpflow.kernels.White()
-
-    np.random.seed(5)
-
-    #define model
-    model = gpflow.models.GPR(data=(train_input_norm.astype(np.float64), 
-                                    train_output_norm.astype(np.float64)),
-                            kernel=kernel)
-    
-    return model
 
 def optimize_model_with_scipy(model, data, monitor, MAXITER):
     """
@@ -220,9 +180,9 @@ def optimize_model_with_scipy(model, data, monitor, MAXITER):
     """
     optimizer = gpflow.optimizers.Scipy()
     optimizer.minimize(
-        model.training_loss,
+        model.training_loss_closure(data),
         variables=model.trainable_variables,
-        #method="l-bfgs-b",
+        method="l-bfgs-b",
         options={"disp": 50, "maxiter": MAXITER},
         step_callback=monitor
     )
@@ -255,7 +215,7 @@ def optimize_with_Adam_NatGrad(model, data, num_data, manager, MAXITER, minib):
     var_params = [(model.q_mu, model.q_sqrt)]
     
     # NatGrad optimization of variational parameters:
-    natgrad_opt = gpflow.optimizers.NaturalGradient(gamma=0.5)
+    natgrad_opt = gpflow.optimizers.NaturalGradient(gamma=0.1)
 
     # Adam optimization of kernel parameters:
     adam_opt = tf.keras.optimizers.Adam(0.01)
@@ -267,8 +227,8 @@ def optimize_with_Adam_NatGrad(model, data, num_data, manager, MAXITER, minib):
     logf = []
 
     for step in range(MAXITER):
-        natgrad_opt.minimize(training_loss, var_list=var_params)
         adam_opt.minimize(training_loss, var_list=model.trainable_variables)
+        natgrad_opt.minimize(training_loss, var_list=var_params)
         if step % 10 == 0:
             elbo = -training_loss().numpy()
             logf.append(elbo)
