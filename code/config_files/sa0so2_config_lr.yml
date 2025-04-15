@@ -1,0 +1,18 @@
+data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/training_data_v2/'
+test_str: '_0xSA_SO2' # the leading underscore is important, to distinguish between 0xSA and 10xSA
+log_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/logs/lr_1lin/_0xSA SO2 only'
+opt: True
+
+# ------
+# Region selection in creating training data was incorrect, 
+# re-running leave-one-out training, March 4 2025.
+#
+# data_dir: where the training data is stored for the model
+# test_str: experiment held out for testing during model training (found in the data_dir)
+# log_dir: where the checkpoints for the trained model are stored, and where the output from testing is saved
+# external_test: this is an optional input, if the model is to be tested on a different dataset than test_str
+# opt: if True, the model is trained. If False, the model is loaded from the last checkpoint and tested on test_str or external_test
+
+# to run, type in the command line:
+# python AeroGP_SVGP_train_model.py ./config_files/X_config3.yml
+# ------
