@@ -58,7 +58,7 @@ def main(cfg):
         logf = optimize_with_Adam_NatGrad(model, training_data, num_data, manager, MAXITER, minib=True)
         elbo_df = pd.DataFrame(logf, columns=['elbo'])
         elbo_df.to_csv(log_dir + '/elbo.csv')
-        gpflow.utilities.print_summary(model)
+        #gpflow.utilities.print_summary(model)
         #pprint.pprint(gpflow.utilities.parameter_dict(model))
     else: 
         checkpoint.restore(manager.latest_checkpoint)
@@ -80,16 +80,20 @@ def setup_data(test_str, data_dir, external_test='None'):
     #if external test data is provided, use that for testing
     print('Making train/test data split.', flush=True)
     if external_test != 'None':
+        # given an external test, the default is to use all training data
         test_in = [external_test]
         print('Test experiment: ', external_test, flush=True)
+        print('Training experiments: ', flush=True)
+        train_in = in_files
+        train_out = out_files
+
     else:
+        # given a test experiment, that is with-held from training.
         test_in = [s for s in in_files if test_str in s]
         print('Test experiment: ', test_str, flush=True)
-    
-    #by default 'test_str' is the held-out experiment (not including in training data, even if external test data is provided)
-    print('Training experiments: ', flush=True)
-    train_in = [s for s in in_files if test_str not in s]
-    train_out = [s for s in out_files if test_str not in s]
+        print('Training experiments: ', flush=True)
+        train_in = [s for s in in_files if test_str not in s]
+        train_out = [s for s in out_files if test_str not in s]
 
     #prepare training data:
     train_input_df = prep_inputs(train_in)
@@ -132,7 +136,7 @@ def make_model(num_data, train_input_norm):
     print("Creating model.", flush=True)
     #model parameters
     N = num_data # number of training points
-    D = num_features = 27 # number of input features
+    D = num_features = 21 # number of input features
     M = 100 # number of inducing points
     L = num_latent = 1 # number of latent functions
     P = 13824 # number of pixels/output locations
@@ -152,8 +156,9 @@ def make_model(num_data, train_input_norm):
     )
 
     #choose inducing points
-    Zinit = (train_input_norm.sample(M)).to_numpy()
-    Z = Zinit.copy() 
+    Zinit = (train_input_norm.sample(M-1)).to_numpy()
+    #Z = Zinit.copy() 
+    Z = np.vstack([Zinit.copy(), np.zeros((1, D))])
 
     #inducing points
     iv = gpflow.inducing_variables.SharedIndependentInducingVariables(

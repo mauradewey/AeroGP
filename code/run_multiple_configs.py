@@ -13,8 +13,8 @@ import glob
 import yaml
 from pathlib import Path
 
-config_dir = "config_files/" # Directory containing config files to run
-config_files = glob.glob(config_dir + '*lr.yml')
+config_dir = "config_files/Arctic_test/" # Directory containing config files to run
+config_files = glob.glob(config_dir + '*.yml')
 
 # Path to the target script
 target_script = "AeroGP_SVGP_train_model.py"
