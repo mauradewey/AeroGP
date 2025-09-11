@@ -1,0 +1,10 @@
+data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/training_data_v2/'
+test_str: 'hist-aer'
+log_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/logs/lr_1lin/logs_hist-aer/'
+#external_test: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/testing_data/inputs_ramipEA2.nc'
+opt: True
+
+# ------
+# Testing.
+#
+# ------

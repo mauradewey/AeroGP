@@ -1,7 +1,7 @@
-data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/training_data_v2/'
-test_str: '0xEA_SO2'
-log_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/logs/lr_1lin/5xEA SO2 only/'
-external_test: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/testing_data/inputs_5xEA_SO2_2.nc'
+data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/training_data_v2/'
+test_str: ''
+log_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/logs/sensitivity_tests/'
+external_test: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/testing_data/inputs_5xEA_SO2_01.nc'
 opt: False
 
 # ------

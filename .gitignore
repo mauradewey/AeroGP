@@ -10,15 +10,19 @@
 /training_data_v3
 /training_data_v3_noAeroGP
 /training_data_NorESM2
+/training_data_withzero
+/ensemble_data
 /resources
 /logs
 /presentations
 /notebooks/experimenting
+/notebooks/plotting_egu.ipynb
 /code/before pert_region fix
 /code/AeroGP_SVGP_latentfn_testing.ipynb
 /code/AeroGP_SVGP_train_model_experimental.ipynb
-/code/utils_GP_experimental.py
 /code/utils_GP_dec.py
 /code/__pycache__
-/code/config_files
 /manuscript
+/testing_data
+/code/config_files/before_pertregion_fix
+/code/config_files/testing

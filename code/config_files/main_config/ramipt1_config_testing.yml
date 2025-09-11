@@ -1,0 +1,9 @@
+data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/training_data_NorESM2/'
+test_str: 'ramip_t1'
+log_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/logs/testing/latent7_multivar/ard'
+#external_test: 'C:/Users/made2928/OneDrive/Documents/MISU/NorESMem/testing_data/inputs_ramipEA2.nc'
+#opt: True
+
+# ------
+# Testing.
+# ------
