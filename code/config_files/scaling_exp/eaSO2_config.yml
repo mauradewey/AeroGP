@@ -1,12 +1,12 @@
-data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/training_data_v2'
-test_str: 'hist-aer'
+data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/training_data_v2/'
+test_str: '5xEA_SO2'
 log_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/logs/sensitivity_tests/'
-external_test: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/testing_data/inputs_histaer01.nc'
+external_test: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/testing_data/inputs_5xEA_SO2.nc'
 opt: False
 
 # ------
 # Region selection in creating training data was incorrect, 
-# re-running leave-one-out training, March 18 2025.
+# re-running leave-one-out training, March 4 2025.
 #
 # data_dir: where the training data is stored for the model
 # test_str: experiment held out for testing during model training (found in the data_dir)

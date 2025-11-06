@@ -1,13 +1,17 @@
-#need description of what this script does
-#Example of how to run:
-# to train the model with 0xEA_SO2 as the held-out experiment:
-# python AeroGP_SVGP_train_model.py ../config_files/ea0so2_config2.yml --opt 
+
+#Example of how to run AeroGP:
 #
-# to load the model from checkpoint and test on 0xEA_SO2:
-# python AeroGP_SVGP_train_model.py ../config_files/ea0so2_config2.yml
+# All settings are specified in a config file (YAML format), see ../config_files/*
+#
+# For example:
+# python AeroGP_SVGP_train_model.py ../config_files/main_config/ea0so2_config_lr.yml 
+#
+# This will train or load the model according to the settings in the config file:
+# To train the model with 0xEA_SO2 as the held-out experiment, opt is set to True in the config file.
+# To load the model from checkpoint and test on 0xEA_SO2, opt is set to False in the config file.
 #
 # If you want to test the model with a different experiment than the one that was left 
-# out in training, specify the test data and the model to load in the config file.
+# out in training, specify the external test input data as an extra parameter in the config file.
 
 
 

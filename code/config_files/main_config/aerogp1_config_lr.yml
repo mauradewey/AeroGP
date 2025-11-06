@@ -1,7 +1,7 @@
 data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/training_data_v2/'
 test_str: 'AeroGP1'
 log_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/logs/lr_v2/AeroGP1'
-opt: False
+opt: True
 
 # ------
 # Region selection in creating training data was incorrect, 

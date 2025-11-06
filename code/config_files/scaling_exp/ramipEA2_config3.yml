@@ -1,5 +1,5 @@
 data_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/training_data_v2/'
-test_str: ''
+test_str: 'ramip_ea'
 log_dir: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/logs/sensitivity_tests/'
 external_test: 'C:/Users/made2928/OneDrive/Documents/MISU/AeroGP/testing_data/inputs_ramipEA2.nc'
 opt: False

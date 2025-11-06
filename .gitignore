@@ -17,10 +17,12 @@
 /presentations
 /notebooks/experimenting
 /notebooks/plotting_egu.ipynb
+/notebooks/utils_GP.py
 /code/before pert_region fix
 /code/AeroGP_SVGP_latentfn_testing.ipynb
-/code/AeroGP_SVGP_train_model_experimental.ipynb
+/code/AeroGP_SVGP_train_model_experimental.py
 /code/utils_GP_dec.py
+/code/utils_GP.py
 /code/__pycache__
 /manuscript
 /testing_data
