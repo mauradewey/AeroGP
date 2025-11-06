@@ -18,6 +18,7 @@
 /notebooks/experimenting
 /notebooks/plotting_egu.ipynb
 /notebooks/utils_GP.py
+/notebooks/figure2_stats_lr_2.csv
 /code/before pert_region fix
 /code/AeroGP_SVGP_latentfn_testing.ipynb
 /code/AeroGP_SVGP_train_model_experimental.py
